@@ -1,13 +1,31 @@
 # Workflow Manager
 
-A static single-page application that runs beside the Istari platform and turns Module Functions into guided, multi-stage workflows for non-technical users. No backend, no database: Istari is the data store and the access control layer.
+**BLUF.** Workflow Manager is an **orchestration layer** that gives non-technical Istari users a guided, multi-step interface for the custom automations engineers build on the platform, without adding a backend, a database, or a new identity system. It is a static web application served from the Istari host, configured entirely by JSON manifests stored in Istari, authenticated by the user's existing Istari sign-in, and executed entirely by Istari agents. Its deployment footprint is one hardened container and one routing rule. Remove it and the platform is unchanged.
 
-- Design: `docs/PRD.md`
-- Manifest format: `docs/manifest-schema.md` (schema at `schema/workflow-manifest.v1.json`)
-- Plan and status: `docs/execution-plan.md`
-- Standards: `docs/coding-standards.md`
-- Deployment and infrastructure: `docs/deployment.md` (artifacts in `deploy/`)
-- Brand: `docs/brand.md`
+## What it is
+
+- **A custom UI layer for Istari Module Functions.** It turns a function or a chain of functions into a form a user can fill in: pick files from Istari, choose a stored credential, set parameters, review intermediate results, and see outputs with links back into the platform. Multi-stage workflows pause for human decisions between automated steps and can be resumed from any device.
+- **Driven by configuration stored in Istari.** Each workflow is a JSON manifest in a dedicated Istari system. The manifest declares the stages, the inputs and their types, the Module Function to run, and how outputs flow into later stages. Publishing a workflow is uploading a file. Changing it is uploading a new revision. No build or deployment is involved.
+- **Governed by Istari's own access control.** A user sees exactly the workflows whose manifests are shared with them. Share one manifest to grant one workflow, share the system to grant them all, remove the share to revoke. Workflow Manager has no permission model of its own.
+- **Signed in with the existing Istari identity.** The same identity provider, the same session, the same per-user token. Every call to the registry and every job it creates is made as the user, so Istari's audit records name the person, not a service account.
+- **Served from the Istari origin.** It is a folder of static files served by a minimal nginx container, reached at a path on the Istari hostname. Because the browser treats it as the same origin as the Istari UI, it reads and writes files through the registry and the object store exactly as the platform's own frontend does.
+- **Stateful through Istari.** Run history and in-progress state live as JSON resources in Istari, next to the jobs they describe. Nothing is stored anywhere else.
+
+## What it is not
+
+- **Not an execution environment.** Workflow Manager runs no customer code and performs no computation on files. Every workflow step executes as an Istari job on an Istari agent, the platform's authorized and accredited computing surface, under the agent's existing controls. The browser only submits the job and watches it.
+- **Not an API or a backend service.** It has no server-side code, exposes no endpoints, accepts no inbound requests other than serving its own files, and makes no outbound connections. There is nothing for another system to integrate with and nothing that holds data at rest.
+- **Not a credential store.** It holds no API keys, service accounts, or client secrets. Tool and LLM credentials stay as Istari stored credentials and are bound to jobs by reference. User tokens live in browser memory for the session.
+- **Not a replacement for the Istari UI.** It covers the gap between what the platform's single-input job form can express and what real engineering workflows need. Files, jobs, and results remain ordinary Istari objects visible in the Istari UI.
+- **Not a platform modification.** No change to the registry, the frontend, the agents, or their configuration. It installs beside the platform and uninstalls cleanly.
+- **Not a no-code builder for end users.** Manifests are authored by engineers who also write the Module Functions. End users run workflows; they do not define them.
+
+## Essential benefits
+
+- **For users:** complex automations become guided forms inside the environment they already work in. No second login, no second desktop, no copying IDs between systems.
+- **For engineers:** a new capability is a Module Function plus a manifest. It ships in days, not release cycles, and updates without redeploying anything.
+- **For security and accreditation:** one static-file container with no data, no secrets, no egress, and no new accounts, riding the platform's existing load balancer, identity provider, and image delivery path. Authorization and audit are Istari's. The security impact analysis is short because there is little to analyze.
+- **For the platform:** it is additive. If the platform later gains these capabilities natively, Workflow Manager can be retired with no migration, because everything it produced is already an Istari resource or job.
 
 ## Layout
 
@@ -53,12 +71,35 @@ npx tsx scripts/smoke-run.mts          # catalog -> create run -> submit stage -
 npx tsx scripts/smoke-cancel.mts <runResourceId|-> [jobId...]
 ```
 
-### Publishing a workflow
+## Workflow configuration: how it is stored, managed, and updated
 
-Upload a manifest JSON to the `workflow-manager` system and share it with the users who should see it. Share the whole system to grant every workflow. During development:
+**There is no database.** Workflow Manager keeps no state of its own anywhere. Every piece of configuration and every record of a run is an ordinary Istari resource, stored and versioned by the platform, in two Istari systems created at install time:
 
-```
-ISTARI_TOKEN=... python scripts/publish_manifest.py docs/examples/smart_diff_workflow_manifest.json
-```
+| System | Contents | Who can read | Who can write |
+|---|---|---|---|
+| `workflow-manager` | One JSON manifest per workflow (`<workflow-key>.json`) | Users the manifest or system is shared with | Engineers who publish workflows |
+| `workflow-manager-runs` | One JSON run document per run (`<run-id>.json`) | Workflow Manager users | Workflow Manager users (the SPA writes transitions; modules write their own outputs) |
 
-The `cli/` package provides `wfm-manifest check|publish|list` with schema validation and live function checks.
+Both are regular systems in the Istari UI. You can open them, browse the files, read a manifest, see its revision history, and share or unshare them like any other content.
+
+### What a manifest is
+
+A manifest is a JSON file describing one workflow: its name and version, its ordered stages, each stage's typed inputs (file pickers, credential pickers, text, numbers, choices), the Module Function each stage runs and how inputs bind to its parameters, and how outputs feed later stages and the results view. The format is specified in `docs/manifest-schema.md` and enforced by the JSON Schema at `schema/workflow-manifest.v1.json`, which both the application and the publishing CLI load. Examples live in `docs/examples/`.
+
+### Lifecycle
+
+1. **Author.** An engineer writes the manifest alongside the Module Function it drives. The manifest lives in source control with the module.
+2. **Validate.** `wfm-manifest check <file>` validates against the schema and the semantic rules (unique keys, bindings resolve, target is a file input). With `--env`, it also confirms against the live registry that every referenced function and version exists and that the function's required inputs are covered.
+3. **Publish.** `wfm-manifest publish <file> --env <env.json>` uploads the manifest as a resource in the `workflow-manager` system. If a file with that name already exists there, it becomes a new revision of the same resource; otherwise a new resource is created and committed to the system's baseline branch. Either way the catalog picks it up on the next page load. No application build, image, or deployment is involved.
+4. **Grant.** Share the manifest resource with the users or groups who should see the workflow, or share the whole system to grant every workflow. This is Istari's standard sharing; Workflow Manager has no permission model of its own and simply lists the manifests the user's token can read.
+5. **Update.** Publish again. The resource gains a revision. Runs record the manifest revision they were started from, so in-flight runs keep rendering against the version they began with, and history remains accurate after a change.
+6. **Retire.** Unshare the manifest to hide it, or archive the resource to remove it. Existing run documents still reference it by id and revision.
+7. **Roll back.** Re-publish an earlier manifest file, or restore the earlier revision in Istari. Nothing else needs to change.
+
+### What this means in practice
+
+- **Versioning, history, and audit come from Istari.** Every change is a revision with an author and a timestamp. Who was granted a workflow and when is in Istari's access history.
+- **Access control is Istari's.** Seeing a manifest lets a user open the form. Istari still checks their access to each file they pick and to the function when the job is created.
+- **Backup and recovery are the platform's.** There is nothing separate to back up.
+- **Environments are just systems.** Development, staging, and production differ only in which registry and which two system ids the application's `config.json` points at.
+- **Invalid manifests fail safely.** A manifest that does not validate is shown to engineers as an error card with the reasons and is never rendered as a form.
