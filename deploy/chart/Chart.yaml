@@ -1,0 +1,6 @@
+apiVersion: v2
+name: workflow-manager
+description: Istari Workflow Manager, a static SPA served by Chainguard nginx beside the Istari frontend.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

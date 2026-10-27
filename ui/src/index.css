@@ -1,0 +1,75 @@
+/* Istari Digital brand theme for Workflow Manager. Fonts are self-hosted (no external requests). */
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/exo';
+@import 'tailwindcss';
+
+@theme {
+  /* Typography: Inter for UI and body (matches the Istari platform UI), Exo for headings/display. */
+  --font-sans: 'Inter Variable', Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-heading: 'Exo Variable', Exo, 'Inter Variable', ui-sans-serif, sans-serif;
+  --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Official palette, Revised Color Palette June 2025 (media kit). */
+  --color-istari-blue: #24367f; /* Istari Blue: primary brand, header, headings */
+  --color-flight-blue: #1a54a3; /* Flight Blue: primary actions, links */
+  --color-digital-blue: #00a2ff; /* Digital Blue: accent, focus rings, active states */
+  --color-cloud-blue: #d8ecff; /* Cloud Blue: tints, selected rows, info surfaces */
+  --color-apple-black: #121212; /* Black: primary text */
+
+  /* Tonal ramps derived from the brand colors for hover/active/tint needs. */
+  --color-brand-50: #eef6ff;
+  --color-brand-100: #d8ecff; /* Cloud Blue */
+  --color-brand-200: #b3dcff;
+  --color-brand-300: #7cc4ff;
+  --color-brand-400: #3db3ff;
+  --color-brand-500: #00a2ff; /* Digital Blue */
+  --color-brand-600: #1a54a3; /* Flight Blue */
+  --color-brand-700: #1b4689;
+  --color-brand-800: #24367f; /* Istari Blue */
+  --color-brand-900: #1a2a60;
+  --color-brand-950: #0f1a3d;
+
+  /* Neutrals: cool grays that sit well with the blues (aligned with the platform UI's gray scale). */
+  --color-ink-50: white;
+  --color-ink-100: #f1f5f9;
+  --color-ink-200: #e2e8f0;
+  --color-ink-300: #cbd5e1;
+  --color-ink-400: #94a3b8;
+  --color-ink-500: #64748b;
+  --color-ink-600: #475569;
+  --color-ink-700: #334155;
+  --color-ink-800: #1e293b;
+  --color-ink-900: #121212; /* Black */
+
+  /* Semantic status colors (kept desaturated to let the brand blues lead). */
+  --color-success: #15803d;
+  --color-success-soft: #dcfce7;
+  --color-warning: #b45309;
+  --color-warning-soft: #fef3c7;
+  --color-danger: #b91c1c;
+  --color-danger-soft: #fee2e2;
+
+  --radius-card: 0.75rem;
+  --shadow-card: 0 1px 2px rgb(18 18 18 / 0.06), 0 1px 3px rgb(36 54 127 / 0.08);
+}
+
+@layer base {
+  html {
+    color: var(--color-apple-black);
+    background-color: var(--color-ink-50);
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    font-family: var(--font-sans);
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.01em;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-digital-blue);
+    outline-offset: 2px;
+  }
+}

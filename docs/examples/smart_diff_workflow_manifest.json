@@ -1,0 +1,97 @@
+{
+  "schema_version": "1",
+  "key": "smart-diff",
+  "name": "Smart Diff",
+  "description": "LLM-assisted comparison of two documents. Surfaces matches, conflicts, and missing items with a traceable HTML report.",
+  "version": "1.2.0",
+  "tags": ["documents", "llm", "icd"],
+  "icon": "git-compare",
+  "stages": [
+    {
+      "key": "configure",
+      "name": "Select documents and model",
+      "description": "Pick the two documents to compare, the credential to use, and the model. The report is attached to the first document.",
+      "inputs": [
+        {
+          "key": "file1",
+          "label": "First document",
+          "type": "resource",
+          "required": true,
+          "help": "The report will be attached to this document as an artifact.",
+          "filter": { "extensions": ["pdf", "docx", "xlsx", "txt"] }
+        },
+        {
+          "key": "file2",
+          "label": "Second document",
+          "type": "resource",
+          "required": true,
+          "filter": { "extensions": ["pdf", "docx", "xlsx", "txt"] }
+        },
+        {
+          "key": "llm_credential",
+          "label": "LLM credential",
+          "type": "auth_secret",
+          "required": true,
+          "help": "One of your linked LLM accounts. The model list below follows the provider of the credential you choose.",
+          "filter": { "secret_type": "@token:llm" }
+        },
+        {
+          "key": "model",
+          "label": "Model",
+          "type": "enum",
+          "required": true,
+          "help": "Each choice is a Smart Diff function registered for that provider and model.",
+          "filter": {
+            "options_by": {
+              "source": "$inputs.llm_credential.provider",
+              "groups": {
+                "openai": [
+                  { "value": "@istari_utils:execute_openai_gpt-4o", "label": "OpenAI / GPT-4o" }
+                ],
+                "claude": [
+                  { "value": "@istari_utils:execute_claude_opus-4.8", "label": "Anthropic / Claude Opus 4.8" }
+                ],
+                "gemini": [
+                  { "value": "@istari_utils:execute_gemini_1.5-pro", "label": "Google / Gemini 1.5 Pro" }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "key": "prompt",
+          "label": "Focus",
+          "type": "text",
+          "required": true,
+          "default": "Diff these two files",
+          "help": "Tell the model what matters most, for example signal timing or voltage tolerances.",
+          "filter": { "multiline": true, "max_length": 2000 }
+        }
+      ],
+      "function": {
+        "name": "$inputs.model",
+        "version": "1.0.5",
+        "target": "file1",
+        "tool_name": "LLM",
+        "operating_system": "RHEL 9",
+        "parameters": {
+          "prompt": "$inputs.prompt"
+        },
+        "sources": {
+          "file2": "$inputs.file2"
+        },
+        "auth_bindings": {
+          "auth_token": "$inputs.llm_credential"
+        }
+      },
+      "outputs": [
+        { "key": "artifacts", "label": "Diff report and logs", "type": "artifact" }
+      ]
+    },
+    {
+      "key": "results",
+      "name": "Results",
+      "view": { "type": "artifact_list", "source": "$stages.configure.outputs.artifacts" }
+    }
+  ]
+}

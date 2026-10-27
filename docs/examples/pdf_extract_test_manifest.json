@@ -1,0 +1,49 @@
+{
+  "schema_version": "1",
+  "key": "pdf-extract-test",
+  "name": "PDF Text Extraction (test)",
+  "description": "Development test workflow. Runs the platform's built-in PDF extraction on one document so the end-to-end run flow can be exercised against demo agents.",
+  "version": "0.1.0",
+  "tags": ["test", "pdf"],
+  "icon": "file-text",
+  "stages": [
+    {
+      "key": "select",
+      "name": "Select a PDF",
+      "description": "Pick a PDF. The extraction output is attached to it as artifacts.",
+      "inputs": [
+        {
+          "key": "document",
+          "label": "Document",
+          "type": "resource",
+          "required": true,
+          "filter": { "extensions": ["pdf"] }
+        },
+        {
+          "key": "note",
+          "label": "Note (recorded on the run, not sent to the function)",
+          "type": "text",
+          "required": false,
+          "filter": { "multiline": true, "max_length": 500 }
+        }
+      ],
+      "function": {
+        "name": "@istari:extract",
+        "version": "1.8.0",
+        "target": "document",
+        "tool_name": "open_pdf",
+        "tool_version": "1.0.0",
+        "operating_system": "Ubuntu 22.04",
+        "parameters": {}
+      },
+      "outputs": [
+        { "key": "artifacts", "label": "Extraction artifacts", "type": "artifact" }
+      ]
+    },
+    {
+      "key": "results",
+      "name": "Results",
+      "view": { "type": "artifact_list", "source": "$stages.select.outputs" }
+    }
+  ]
+}

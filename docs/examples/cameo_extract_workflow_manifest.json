@@ -1,0 +1,49 @@
+{
+  "schema_version": "1",
+  "key": "cameo-extract",
+  "name": "Cameo Model Extraction",
+  "description": "Runs the platform's Cameo extraction on a selected .mdzip model. Extracted artifacts are attached to the model and listed here when the job completes.",
+  "version": "0.1.0",
+  "tags": ["cameo", "sysml", "extraction"],
+  "icon": "box",
+  "stages": [
+    {
+      "key": "select",
+      "name": "Select a Cameo model",
+      "description": "Pick an .mdzip model. The job runs on a Windows agent with Cameo installed.",
+      "inputs": [
+        {
+          "key": "model",
+          "label": "Cameo model (.mdzip)",
+          "type": "resource",
+          "required": true,
+          "filter": { "extensions": ["mdzip"] }
+        },
+        {
+          "key": "note",
+          "label": "Note (recorded on the run only)",
+          "type": "text",
+          "required": false,
+          "filter": { "multiline": true, "max_length": 500 }
+        }
+      ],
+      "function": {
+        "name": "@istari:extract",
+        "version": "4.5.2",
+        "target": "model",
+        "tool_name": "dassault_cameo",
+        "tool_version": "2022x Refresh2",
+        "operating_system": "Windows 10",
+        "parameters": {}
+      },
+      "outputs": [
+        { "key": "artifacts", "label": "Extracted artifacts", "type": "artifact" }
+      ]
+    },
+    {
+      "key": "results",
+      "name": "Results",
+      "view": { "type": "artifact_list", "source": "$stages.select.outputs.artifacts" }
+    }
+  ]
+}

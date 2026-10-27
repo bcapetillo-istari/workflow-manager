@@ -1,0 +1,17 @@
+# Runtime configuration served at /apps/workflows/config.json (mounted at /config in the pod).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "workflow-manager.fullname" . }}-config
+  labels: {{- include "workflow-manager.labels" . | nindent 4 }}
+data:
+  config.json: |
+    {
+      "registryUrl": {{ .Values.config.registryUrl | quote }},
+      "istariWebUrl": {{ .Values.config.istariWebUrl | quote }},
+      "workflowManagerSystemId": {{ .Values.config.workflowManagerSystemId | quote }},
+      "workflowManagerRunsSystemId": {{ .Values.config.workflowManagerRunsSystemId | quote }},
+      "devAuth": {{ .Values.config.devAuth | default false }},
+      "oidcAuthority": {{ .Values.config.oidcAuthority | default "" | quote }},
+      "oidcClientId": {{ .Values.config.oidcClientId | default "" | quote }}
+    }

@@ -1,0 +1,13 @@
+Workflow Manager {{ .Chart.AppVersion }} installed as release {{ .Release.Name }} in namespace {{ .Release.Namespace }}.
+
+Image:   {{ include "workflow-manager.image" . }}
+Ingress: mode={{ .Values.ingress.mode }}{{ if ne .Values.ingress.mode "none" }}  https://{{ .Values.ingress.host }}{{ .Values.ingress.path }}/{{ end }}
+
+Check:
+  kubectl -n {{ .Release.Namespace }} rollout status deploy/{{ include "workflow-manager.fullname" . }}
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "workflow-manager.fullname" . }} 8080:{{ .Values.service.port }}
+  curl -s localhost:8080/healthz ; curl -s localhost:8080{{ .Values.ingress.path }}/config.json
+
+Post-install (see deploy/README.md): create the Istari systems "workflow-manager" and
+"workflow-manager-runs", set their IDs in values (config.*SystemId), and publish manifests with
+`wfm-manifest publish <manifest.json> --env env.json`.

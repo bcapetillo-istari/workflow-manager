@@ -1,0 +1,32 @@
+{
+  "$comment": "INVALID on purpose: schema-conformant, but two bindings do not resolve. Expected errors: stages[0].function.parameters.file2_resource_id: \"$inputs.file3.resource_id\" does not resolve: stage \"configure\" has no input \"file3\" and stages[0].function.parameters.previous_report: \"$stages.results.outputs.report\" references stage \"results\" (stages[1]), which comes after this stage",
+  "schema_version": "1",
+  "key": "bad-binding",
+  "name": "Bad binding (invalid example)",
+  "version": "1.0.0",
+  "stages": [
+    {
+      "key": "configure",
+      "name": "Select documents",
+      "inputs": [
+        { "key": "file1", "label": "First document", "type": "resource", "required": true },
+        { "key": "file2", "label": "Second document", "type": "resource", "required": true }
+      ],
+      "function": {
+        "name": "@istari_utils:smart_diff",
+        "target": "file1",
+        "parameters": {
+          "file2_resource_id": "$inputs.file3.resource_id",
+          "previous_report": "$stages.results.outputs.report"
+        }
+      },
+      "outputs": [{ "key": "report", "label": "Report", "type": "artifact" }]
+    },
+    {
+      "key": "results",
+      "name": "Results",
+      "outputs": [{ "key": "report", "label": "Report", "type": "artifact" }],
+      "view": { "type": "artifact_list", "source": "$stages.configure.outputs" }
+    }
+  ]
+}

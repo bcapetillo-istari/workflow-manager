@@ -1,0 +1,27 @@
+{{- /*
+ingress.mode "istio": route /apps/workflows on the platform Gateway to our Service.
+Istio evaluates HTTP routes in order across VirtualServices bound to the same gateway and host; if the
+frontend's VirtualService has a catch-all route, this VirtualService (or its prefix match) must sort
+ahead of it. Verify with `istioctl x describe pod <frontend-pod>` after install.
+*/ -}}
+{{- if eq .Values.ingress.mode "istio" }}
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: {{ include "workflow-manager.fullname" . }}
+  labels: {{- include "workflow-manager.labels" . | nindent 4 }}
+spec:
+  hosts:
+    - {{ .Values.ingress.host | quote }}
+  gateways:
+    - {{ .Values.ingress.istio.gateway }}
+  http:
+    - match:
+        - uri: { prefix: {{ printf "%s/" .Values.ingress.path | quote }} }
+        - uri: { exact: {{ .Values.ingress.path | quote }} }
+      route:
+        - destination:
+            host: {{ include "workflow-manager.fullname" . }}
+            port:
+              number: {{ .Values.service.port }}
+{{- end }}

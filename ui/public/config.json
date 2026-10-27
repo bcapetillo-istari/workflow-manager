@@ -1,0 +1,7 @@
+{
+  "registryUrl": "https://api.demo.istari.app",
+  "istariWebUrl": "https://demo.istari.app",
+  "workflowManagerSystemId": "df2e9e2e-e2a1-4a3b-aa58-01dc6f43321f",
+  "workflowManagerRunsSystemId": "487849ba-7716-4c9b-a99e-92749de25b82",
+  "devAuth": true
+}

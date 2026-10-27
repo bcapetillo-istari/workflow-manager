@@ -1,0 +1,58 @@
+# Workflow Manager Helm values. Install into the Istari namespace:
+#   helm upgrade --install workflow-manager deploy/chart -n istari -f values-<env>.yaml
+
+replicaCount: 1                       # 2 recommended for production
+
+image:
+  registry: ""                        # "" -> repository used as-is; set to the internal mirror, e.g. "123456789012.dkr.ecr.us-gov-west-1.amazonaws.com"
+  repository: istari/workflow-manager
+  tag: "0.1.0"                        # pinned; never "latest"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets:
+  - name: docker-pull-secret          # platform convention
+
+# Rendered into the ConfigMap as config.json and served at /apps/workflows/config.json.
+config:
+  registryUrl: https://api.example.com
+  istariWebUrl: https://istari.example.com
+  workflowManagerSystemId: ""
+  workflowManagerRunsSystemId: ""
+  devAuth: false                      # must stay false in production
+  # OIDC (Phase 6). Same Zitadel issuer the Istari frontend uses; client id per docs/auth.md provisioning path.
+  oidcAuthority: ""                   # e.g. https://zitadel.istari.example.com
+  oidcClientId: ""                    # frontend client id (path 1) or dedicated application id (path 2)
+
+service:
+  port: 80                            # Service port; container always listens on 8080
+
+ingress:
+  # alb | nginx | istio | none
+  mode: alb
+  # Istari frontend hostname. The SPA must share this origin with the Istari UI (CORS).
+  host: istari.example.com
+  path: /apps/workflows
+  annotations: {}                     # extra annotations merged into the Ingress (alb, nginx)
+  alb:
+    className: istari                 # IngressClass of the shared platform ALB (group "istari")
+    loadBalancerName: istari
+    certificateArn: ""                # same ACM cert the platform ingresses use
+    healthcheckPath: /healthz
+    scheme: internet-facing
+  nginx:
+    className: nginx
+    tlsSecretName: istari-tls         # "" disables the tls block
+  istio:
+    gateway: istio-system/istari-gateway   # <namespace>/<gateway> of the platform Gateway
+
+networkPolicy:
+  enabled: true                       # ingress on 8080 from anywhere; all egress denied
+
+resources:
+  requests: { cpu: 50m, memory: 64Mi }
+  limits:   { cpu: 200m, memory: 128Mi }
+
+podAnnotations: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

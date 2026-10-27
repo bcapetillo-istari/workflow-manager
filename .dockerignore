@@ -1,0 +1,13 @@
+# Build context is the repo root (docker build -f deploy/Dockerfile .).
+# Needed: ui/ sources, schema/ and docs/examples/ (imported by the SPA and its tests), deploy/nginx.conf.
+.git
+**/node_modules
+ui/dist
+ui/coverage
+ui/scripts/.build
+cli
+scripts
+*.har
+*.log
+.env
+.env.*

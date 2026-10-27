@@ -1,0 +1,21 @@
+{
+  "$comment": "INVALID on purpose: the job stage's function has no `target`. Expected error: stages[0].function: missing required property \"target\"",
+  "schema_version": "1",
+  "key": "missing-target",
+  "name": "Missing target (invalid example)",
+  "version": "1.0.0",
+  "stages": [
+    {
+      "key": "configure",
+      "name": "Select document",
+      "inputs": [
+        { "key": "file1", "label": "Document", "type": "resource", "required": true }
+      ],
+      "function": {
+        "name": "@istari_utils:smart_diff",
+        "parameters": { "prompt": "Summarize" }
+      },
+      "outputs": [{ "key": "report", "label": "Report", "type": "artifact" }]
+    }
+  ]
+}

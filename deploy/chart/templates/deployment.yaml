@@ -1,0 +1,82 @@
+# Pod hardening mirrors the Istari platform: UID/GID 65532, read-only root fs, no capabilities,
+# RuntimeDefault seccomp. nginx writes only to the two emptyDir mounts (/run, /var/lib/nginx/tmp).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "workflow-manager.fullname" . }}
+  labels: {{- include "workflow-manager.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels: {{- include "workflow-manager.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "workflow-manager.selectorLabels" . | nindent 8 }}
+      annotations:
+        # Roll pods when config.json changes.
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      automountServiceAccountToken: false   # the pod never talks to the API server
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: nginx
+          image: {{ include "workflow-manager.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            capabilities:
+              drop: ["ALL"]
+          livenessProbe:
+            httpGet: { path: /healthz, port: http }
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          readinessProbe:
+            httpGet: { path: /healthz, port: http }
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: run
+              mountPath: /run
+            - name: nginx-tmp
+              mountPath: /var/lib/nginx/tmp
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "workflow-manager.fullname" . }}-config
+        - name: run
+          emptyDir: { medium: Memory, sizeLimit: 1Mi }
+        - name: nginx-tmp
+          emptyDir: { medium: Memory, sizeLimit: 16Mi }
+      {{- with .Values.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity: {{- toYaml . | nindent 8 }}
+      {{- end }}
