@@ -1,6 +1,6 @@
 import type { AuthSecretSummary } from '../../gateway/types';
 import type { InputComponentProps } from '../../renderer/types';
-import { Badge, Spinner, pickerListClasses, pickerRowClasses } from '../ui';
+import { Spinner, pickerListClasses, pickerRowClasses } from '../ui';
 import { errorMessage } from '../ui/ErrorState';
 import { isAuthSecretValue } from '../inputs/valueGuards';
 import { useAuthSecrets } from './hooks';
@@ -17,7 +17,7 @@ export function LinkedAccountCredentialPicker({
   const secrets = useAuthSecrets(input.filter?.secret_type);
   const current = isAuthSecretValue(value) ? value.secret_id : undefined;
   const pick = (s: AuthSecretSummary) =>
-    onChange({ secret_id: s.secretId, name: s.name, provider: s.provider });
+    onChange({ secret_id: s.secretId, name: s.name });
 
   if (secrets.isPending) {
     return (
@@ -30,8 +30,8 @@ export function LinkedAccountCredentialPicker({
   if (secrets.data.length === 0) {
     return (
       <p className="text-sm text-ink-500">
-        No linked credentials{input.filter?.secret_type ? ` of type ${input.filter.secret_type}` : ''}. Add
-        one in Istari first.
+        No linked account credentials{input.filter?.secret_type ? ` matching ${input.filter.secret_type}` : ''}.
+        Link one in Istari (Settings, Linked Accounts) first.
       </p>
     );
   }
@@ -56,7 +56,6 @@ export function LinkedAccountCredentialPicker({
                 onChange={() => pick(s)}
               />
               <span className="flex-1 truncate font-medium">{s.name}</span>
-              {s.provider && <Badge tone={on ? 'neutral' : 'info'}>{s.provider}</Badge>}
               {s.expiration && (
                 <span className={`text-xs ${on ? 'text-istari-blue/80' : 'text-ink-500'}`}>
                   expires {new Date(s.expiration).toLocaleDateString()}

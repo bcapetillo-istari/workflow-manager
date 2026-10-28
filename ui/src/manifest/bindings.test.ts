@@ -184,7 +184,7 @@ describe('bindingReferences', () => {
   it('lists every binding in the Smart Diff manifest with its path', () => {
     const refs = bindingReferences(smartDiff as WorkflowManifest);
     expect(refs).toEqual([
-      { location: 'stages[0].inputs[3].filter.options_by.source', expr: '$inputs.llm_credential.provider' },
+      { location: 'stages[0].inputs[3].filter.options_by.source', expr: '$inputs.llm_credential.name' },
       { location: 'stages[0].function.name', expr: '$inputs.model' },
       { location: 'stages[0].function.parameters.prompt', expr: '$inputs.prompt' },
       { location: 'stages[0].function.sources.file2', expr: '$inputs.file2' },

@@ -65,10 +65,11 @@ describe('StageForm', () => {
           required: true,
           filter: {
             options_by: {
-              source: '$inputs.cred.provider',
+              source: '$inputs.cred.name',
+              match: 'contains',
               groups: {
                 openai: [{ value: 'gpt', label: 'GPT' }],
-                claude: [{ value: 'opus', label: 'Opus' }],
+                anthropic: [{ value: 'opus', label: 'Opus' }],
               },
             },
           },
@@ -96,18 +97,18 @@ describe('StageForm', () => {
           label: 'Credential',
           type: 'auth_secret',
           required: true,
-          filter: { secret_type: '@token:git' },
+          filter: { secret_type: 'oauth' },
         },
         {
           key: 'model',
           label: 'Model',
           type: 'enum',
-          filter: { options_by: { source: '$inputs.cred.provider', groups: { openai: [] } } },
+          filter: { options_by: { source: '$inputs.cred.name', match: 'contains', groups: { openai: [] } } },
         },
       ],
     };
     renderWithProviders(<StageForm stage={s} run={null} onSubmit={() => undefined} />);
     fireEvent.click(await screen.findByLabelText(/GitHub/));
-    expect(await screen.findByText(/No options available for “github”/)).toBeInTheDocument();
+    expect(await screen.findByText(/No options available for “GitHub”/)).toBeInTheDocument();
   });
 });

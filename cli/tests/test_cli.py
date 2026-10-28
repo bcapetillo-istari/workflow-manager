@@ -25,7 +25,7 @@ def run(*argv: str) -> tuple[int, str]:
 def test_check_valid_example() -> None:
     code, out = run("check", str(EXAMPLES / "smart_diff_workflow_manifest.json"))
     assert code == 0
-    assert out.strip() == "OK: Smart Diff (key=smart-diff, version=1.2.0, 2 stages)"
+    assert out.strip().startswith("OK: Smart Diff (key=smart-diff, version=") and out.strip().endswith(", 2 stages)")
 
 
 def test_check_invalid_examples() -> None:

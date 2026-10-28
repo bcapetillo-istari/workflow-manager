@@ -4,7 +4,13 @@
   "title": "Workflow Manifest (schema_version 1)",
   "description": "One Workflow in the workflow-manager Istari system: what to collect from the user and what to run. Human-readable specification: docs/manifest-schema.md. Readers ignore unknown fields, so additionalProperties is left open throughout. Cross-reference rules (unique keys, binding resolution, function.target naming a resource input) are enforced by the validator, not by this schema. The non-standard `errorMessage` keyword carries the human-readable message a validator should emit when the annotated subschema fails.",
   "type": "object",
-  "required": ["schema_version", "key", "name", "version", "stages"],
+  "required": [
+    "schema_version",
+    "key",
+    "name",
+    "version",
+    "stages"
+  ],
   "properties": {
     "schema_version": {
       "description": "Schema major version. \"1\" for this document. Readers reject unknown major versions.",
@@ -35,7 +41,9 @@
     "tags": {
       "description": "Catalog filtering.",
       "type": "array",
-      "items": { "type": "string" }
+      "items": {
+        "type": "string"
+      }
     },
     "icon": {
       "description": "Name from the SPA's icon set.",
@@ -45,7 +53,9 @@
       "description": "Ordered stages. At least one.",
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/stage" }
+      "items": {
+        "$ref": "#/$defs/stage"
+      }
     }
   },
   "$defs": {
@@ -64,7 +74,10 @@
     "stage": {
       "description": "One step of the workflow. With a function: job stage. Without a function but with inputs: review gate. Neither: display stage.",
       "type": "object",
-      "required": ["key", "name"],
+      "required": [
+        "key",
+        "name"
+      ],
       "properties": {
         "key": {
           "description": "Unique within the manifest. Referenced by later stages as $stages.<key>.",
@@ -82,7 +95,9 @@
         "inputs": {
           "description": "Fields collected from the user at this stage.",
           "type": "array",
-          "items": { "$ref": "#/$defs/input" }
+          "items": {
+            "$ref": "#/$defs/input"
+          }
         },
         "function": {
           "description": "Module Function to run after inputs are submitted.",
@@ -91,24 +106,38 @@
         "outputs": {
           "description": "What the function produces, so later stages and views can bind to it.",
           "type": "array",
-          "items": { "$ref": "#/$defs/output" }
+          "items": {
+            "$ref": "#/$defs/output"
+          }
         },
         "view": {
           "description": "How to present this stage's content (review gate or result display).",
           "$ref": "#/$defs/view"
         }
       },
-      "if": { "required": ["function"] },
+      "if": {
+        "required": [
+          "function"
+        ]
+      },
       "then": {
         "description": "An Istari job runs against exactly one resource, so a job stage needs a resource input to be its target.",
-        "required": ["inputs"],
+        "required": [
+          "inputs"
+        ],
         "properties": {
           "inputs": {
             "type": "array",
             "contains": {
               "type": "object",
-              "required": ["type"],
-              "properties": { "type": { "const": "resource" } }
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "const": "resource"
+                }
+              }
             },
             "errorMessage": "a stage with a function must have at least one \"resource\" input to use as function.target"
           }
@@ -133,19 +162,29 @@
     },
     "enumOption": {
       "type": "object",
-      "required": ["value", "label"],
+      "required": [
+        "value",
+        "label"
+      ],
       "properties": {
-        "value": { "type": "string" },
-        "label": { "type": "string" }
+        "value": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        }
       }
     },
     "optionsBy": {
-      "description": "Dependent options: show the group whose key equals the resolved `source` value. `source` must bind to another input in the same stage.",
+      "description": "Dependent options: show the group whose key matches the resolved `source` value, exactly (default) or as a case-insensitive substring of the value when `match` is \"contains\". `source` must bind to another input in the same stage.",
       "type": "object",
-      "required": ["source", "groups"],
+      "required": [
+        "source",
+        "groups"
+      ],
       "properties": {
         "source": {
-          "description": "Binding to an input in the same stage, for example $inputs.llm_credential.provider.",
+          "description": "Binding to an input in the same stage, for example $inputs.llm_credential.name.",
           "$ref": "#/$defs/binding"
         },
         "groups": {
@@ -153,8 +192,19 @@
           "type": "object",
           "additionalProperties": {
             "type": "array",
-            "items": { "$ref": "#/$defs/enumOption" }
+            "items": {
+              "$ref": "#/$defs/enumOption"
+            }
           }
+        },
+        "match": {
+          "description": "How group keys are compared with the source value: \"exact\" (default) or \"contains\" (first key found as a case-insensitive substring of the value).",
+          "type": "string",
+          "enum": [
+            "exact",
+            "contains"
+          ],
+          "default": "exact"
         }
       }
     },
@@ -165,14 +215,16 @@
         "extensions": {
           "description": "resource: allowed file extensions.",
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "system": {
           "description": "resource, branch: binding to a `system` input that scopes the picker. Required for branch.",
           "$ref": "#/$defs/binding"
         },
         "secret_type": {
-          "description": "auth_secret: secret type such as \"@token:llm\".",
+          "description": "auth_secret: optional. Restrict the picker to credentials whose auth type matches, given as an Istari validation type (\"@token:llm\" matches auth type token) or an auth type (token, basic, oauth). Omit to list every linked account credential.",
           "type": "string"
         },
         "multiline": {
@@ -206,7 +258,9 @@
           "description": "enum, multi_enum: static option list.",
           "type": "array",
           "minItems": 1,
-          "items": { "$ref": "#/$defs/enumOption" }
+          "items": {
+            "$ref": "#/$defs/enumOption"
+          }
         },
         "options_by": {
           "description": "enum, multi_enum: options that depend on another input in the same stage.",
@@ -227,14 +281,23 @@
     "input": {
       "description": "A field collected from the user. Referenced as $inputs.<key>.",
       "type": "object",
-      "required": ["key", "label", "type"],
+      "required": [
+        "key",
+        "label",
+        "type"
+      ],
       "properties": {
         "key": {
           "description": "Unique within the stage.",
           "$ref": "#/$defs/identifier"
         },
-        "label": { "type": "string", "minLength": 1 },
-        "type": { "$ref": "#/$defs/inputType" },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "$ref": "#/$defs/inputType"
+        },
         "required": {
           "description": "Default false.",
           "type": "boolean"
@@ -254,22 +317,45 @@
           "description": "Custom component compiled into the SPA. Overrides the default for `type`.",
           "type": "string"
         },
-        "filter": { "$ref": "#/$defs/filter" }
+        "filter": {
+          "$ref": "#/$defs/filter"
+        }
       },
       "allOf": [
         {
           "if": {
-            "required": ["type"],
-            "properties": { "type": { "enum": ["enum", "multi_enum"] } }
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "enum": [
+                  "enum",
+                  "multi_enum"
+                ]
+              }
+            }
           },
           "then": {
-            "required": ["filter"],
+            "required": [
+              "filter"
+            ],
             "properties": {
               "filter": {
                 "type": "object",
                 "oneOf": [
-                  { "type": "object", "required": ["options"] },
-                  { "type": "object", "required": ["options_by"] }
+                  {
+                    "type": "object",
+                    "required": [
+                      "options"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "options_by"
+                    ]
+                  }
                 ],
                 "errorMessage": "enum and multi_enum require exactly one of \"options\" or \"options_by\""
               }
@@ -279,15 +365,25 @@
         },
         {
           "if": {
-            "required": ["type"],
-            "properties": { "type": { "const": "stage_output" } }
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "stage_output"
+              }
+            }
           },
           "then": {
-            "required": ["filter"],
+            "required": [
+              "filter"
+            ],
             "properties": {
               "filter": {
                 "type": "object",
-                "required": ["source"],
+                "required": [
+                  "source"
+                ],
                 "errorMessage": "stage_output requires filter.source ($stages.<stage>.outputs.<key>)"
               }
             },
@@ -296,15 +392,25 @@
         },
         {
           "if": {
-            "required": ["type"],
-            "properties": { "type": { "const": "branch" } }
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "branch"
+              }
+            }
           },
           "then": {
-            "required": ["filter"],
+            "required": [
+              "filter"
+            ],
             "properties": {
               "filter": {
                 "type": "object",
-                "required": ["system"],
+                "required": [
+                  "system"
+                ],
                 "errorMessage": "branch requires filter.system ($inputs.<key> of a system input)"
               }
             },
@@ -313,13 +419,22 @@
         },
         {
           "if": {
-            "required": ["secret"],
-            "properties": { "secret": { "const": true } }
+            "required": [
+              "secret"
+            ],
+            "properties": {
+              "secret": {
+                "const": true
+              }
+            }
           },
           "then": {
             "properties": {
               "type": {
-                "enum": ["auth_secret", "text"],
+                "enum": [
+                  "auth_secret",
+                  "text"
+                ],
                 "errorMessage": "secret may only be set on auth_secret and text inputs"
               }
             }
@@ -330,14 +445,21 @@
     "function": {
       "description": "Module Function to run against the target resource.",
       "type": "object",
-      "required": ["name", "target"],
+      "required": [
+        "name",
+        "target"
+      ],
       "properties": {
         "name": {
           "description": "Fully qualified function name, for example @istari_utils:smart_diff, or a binding (for example $inputs.model) to an enum or text input whose value is the function name at runtime.",
           "type": "string",
           "anyOf": [
-            { "pattern": "^@[^:\\s]+:\\S+$" },
-            { "pattern": "^\\$(inputs|stages)\\." }
+            {
+              "pattern": "^@[^:\\s]+:\\S+$"
+            },
+            {
+              "pattern": "^\\$(inputs|stages)\\."
+            }
           ],
           "errorMessage": "function name must be fully qualified (for example \"@istari_utils:smart_diff\") or a binding such as \"$inputs.model\""
         },
@@ -352,7 +474,13 @@
         "parameters": {
           "description": "Function parameter name to a binding or literal.",
           "type": "object",
-          "additionalProperties": { "type": ["string", "number", "boolean"] }
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          }
         },
         "sources": {
           "description": "Additional user_model inputs: function input key -> binding to a `resource` input, or to an earlier stage's input/output. The bound value's revision_id is sent as a job source with that relationship identifier.",
@@ -361,7 +489,9 @@
             "minLength": 1,
             "errorMessage": "function input keys must be non-empty"
           },
-          "additionalProperties": { "$ref": "#/$defs/binding" }
+          "additionalProperties": {
+            "$ref": "#/$defs/binding"
+          }
         },
         "auth_bindings": {
           "description": "auth_info inputs: function auth input key -> binding to an `auth_secret` input; its secret_id is bound to the job.",
@@ -370,25 +500,52 @@
             "minLength": 1,
             "errorMessage": "function input keys must be non-empty"
           },
-          "additionalProperties": { "$ref": "#/$defs/binding" }
+          "additionalProperties": {
+            "$ref": "#/$defs/binding"
+          }
         },
-        "tool_name": { "type": "string" },
-        "tool_version": { "type": "string" },
-        "operating_system": { "type": "string" },
-        "agent_pool_id": { "type": "string" }
+        "tool_name": {
+          "type": "string"
+        },
+        "tool_version": {
+          "type": "string"
+        },
+        "operating_system": {
+          "type": "string"
+        },
+        "agent_pool_id": {
+          "type": "string"
+        }
       }
     },
     "outputType": {
-      "enum": ["artifact", "resource", "revision", "json", "text"]
+      "enum": [
+        "artifact",
+        "resource",
+        "revision",
+        "json",
+        "text"
+      ]
     },
     "output": {
       "description": "Something the function writes to /stages/<key>/outputs in the run document. Referenced as $stages.<stage>.outputs.<key>.",
       "type": "object",
-      "required": ["key", "label", "type"],
+      "required": [
+        "key",
+        "label",
+        "type"
+      ],
       "properties": {
-        "key": { "$ref": "#/$defs/identifier" },
-        "label": { "type": "string", "minLength": 1 },
-        "type": { "$ref": "#/$defs/outputType" },
+        "key": {
+          "$ref": "#/$defs/identifier"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "$ref": "#/$defs/outputType"
+        },
         "path": {
           "description": "For json: pointer into the run document section the module wrote, when the output is nested.",
           "type": "string"
@@ -396,14 +553,24 @@
       }
     },
     "viewType": {
-      "enum": ["artifact_list", "json_table", "markdown", "summary"]
+      "enum": [
+        "artifact_list",
+        "json_table",
+        "markdown",
+        "summary"
+      ]
     },
     "view": {
       "description": "How to present a stage's content.",
       "type": "object",
-      "required": ["type", "source"],
+      "required": [
+        "type",
+        "source"
+      ],
       "properties": {
-        "type": { "$ref": "#/$defs/viewType" },
+        "type": {
+          "$ref": "#/$defs/viewType"
+        },
         "source": {
           "description": "Binding to the content to show, usually $stages.<key>.outputs or one output within it.",
           "$ref": "#/$defs/binding"

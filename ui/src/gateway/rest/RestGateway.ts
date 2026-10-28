@@ -55,6 +55,7 @@ import {
   type UploadedBlob,
   type UrlRewrite,
 } from './storage';
+import { matchesSecretType } from '../secretTypes';
 
 export interface RestGatewayOptions {
   registryUrl: string;
@@ -236,8 +237,7 @@ export class RestGateway implements IstariGateway {
 
   async listAuthSecrets(filter?: { secretType?: string }): Promise<AuthSecretSummary[]> {
     const rows = await this.http.get<StoredCredentialDto[]>('/v2/credentials');
-    const wanted = filter?.secretType?.toLowerCase();
-    return rows.filter((c) => !wanted || c.auth_type.toLowerCase() === wanted).map(mapCredential);
+    return rows.filter((c) => matchesSecretType(c.auth_type, filter?.secretType)).map(mapCredential);
   }
 
   async listFunctions(filter?: { name?: string; inputExtension?: string }): Promise<FunctionSummary[]> {

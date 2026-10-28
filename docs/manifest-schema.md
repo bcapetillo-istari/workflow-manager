@@ -60,7 +60,7 @@ Types and the component each maps to:
 | `resource` | ResourcePicker (search, select, choose revision) | `{ resource_id, revision_id, name }` | `extensions: string[]`, `system: "$inputs.<key>"` to scope to a chosen system |
 | `system` | SystemPicker | `{ system_id, name }` | |
 | `branch` | BranchPicker | `{ branch_id, tag }` | `system: "$inputs.<key>"` (required) |
-| `auth_secret` | LinkedAccountCredentialPicker (Istari function auth secrets) | `{ secret_id, name, provider }` | `secret_type: string` such as `"@token:llm"`. `provider` is derived from the secret's linked auth integration (see note below). |
+| `auth_secret` | LinkedAccountCredentialPicker (the user's linked account credentials) | `{ secret_id, name }` | `secret_type: string`, optional. Omit to list every linked credential (the default). When given, an Istari validation type such as `"@token:llm"` matches credentials of auth type `token`; `basic` and `oauth` are also accepted. |
 | `text` | TextInput | string | `multiline: boolean`, `pattern: regex`, `max_length: number` |
 | `number` | NumberInput | number | `min`, `max`, `step` |
 | `boolean` | Toggle | boolean | |
@@ -74,16 +74,13 @@ Types and the component each maps to:
 
 ```json
 "options_by": {
-  "source": "$inputs.llm_credential.provider",
-  "groups": { "openai": [ { "value": "gpt-4o", "label": "OpenAI / GPT-4o" } ], "claude": [ ... ] }
+  "source": "$inputs.llm_credential.name",
+  "match": "contains",
+  "groups": { "openai": [ { "value": "...", "label": "OpenAI / GPT-4o" } ], "anthropic": [ ... ] }
 }
 ```
 
-The component shows the group whose key equals the resolved `source` value, and is disabled until that input has a value. If the source value matches no group, the component shows an empty list with a message. This is the only form of dependency between inputs. There is no general `visible_if`.
-
-### Note on `auth_secret.provider`
-
-Istari function auth secrets carry a `function_auth_type` and an `auth_integration_id`, not a provider name. The LinkedAccountCredentialPicker resolves `provider` from the linked auth integration's type or name using a small mapping maintained in the SPA. Confirm with the platform team how LLM credentials are modeled in the target environment; if a provider cannot be derived, the fallback is an explicit `provider` enum input placed before the credential picker, with the credential picker filtered by `"$inputs.provider"`.
+`match` selects how group keys are compared with the resolved source value: `"exact"` (default) requires the value to equal a key; `"contains"` picks the first key that appears, case-insensitively, inside the value, which lets a manifest key on a free-text field such as a credential's name. The component is disabled until the source input has a value, and shows an empty list with a message when no group matches. Workflow Manager has no knowledge of what the groups mean; the manifest owns that mapping entirely. This is the only form of dependency between inputs. There is no general `visible_if`.
 
 ## Function
 
@@ -138,15 +135,13 @@ By the CLI only, using the SDK against the target environment:
 
 ## Example: Smart Diff
 
-The `model` enum carries function names as its option values, so `function.name` binds to it. `sources` and `auth_bindings` route the second document and the credential to the function's `user_model` and `auth_info` inputs.
-
 ```json
 {
   "schema_version": "1",
   "key": "smart-diff",
   "name": "Smart Diff",
-  "description": "LLM-assisted comparison of two documents. Surfaces matches, conflicts, and missing items with a traceable HTML report.",
-  "version": "1.2.0",
+  "description": "LLM-assisted comparison of two documents. Surfaces matches, conflicts, and missing items with a traceable HTML report attached to the first document.",
+  "version": "1.3.2",
   "tags": [
     "documents",
     "llm",
@@ -190,39 +185,49 @@ The `model` enum carries function names as its option values, so `function.name`
         },
         {
           "key": "llm_credential",
-          "label": "LLM credential",
+          "label": "Linked account credential",
           "type": "auth_secret",
           "required": true,
-          "help": "One of your linked LLM accounts. The model list below follows the provider of the credential you choose.",
-          "filter": {
-            "secret_type": "@token:llm"
-          }
+          "help": "Any of your linked accounts. The model list below follows the credential you choose (matched on its name)."
         },
         {
           "key": "model",
           "label": "Model",
           "type": "enum",
           "required": true,
-          "help": "Each choice is a Smart Diff function registered for that provider and model.",
+          "help": "Each choice is a Smart Diff function of the @bcapetillo:smart_diff module registered for that provider and model.",
           "filter": {
             "options_by": {
-              "source": "$inputs.llm_credential.provider",
+              "source": "$inputs.llm_credential.name",
+              "match": "contains",
               "groups": {
                 "openai": [
                   {
-                    "value": "@istari_utils:execute_openai_gpt-4o",
+                    "value": "@bcapetillo:execute_openai_gpt-4o",
                     "label": "OpenAI / GPT-4o"
+                  }
+                ],
+                "anthropic": [
+                  {
+                    "value": "@bcapetillo:execute_claude_opus-4.8",
+                    "label": "Anthropic / Claude Opus 4.8"
                   }
                 ],
                 "claude": [
                   {
-                    "value": "@istari_utils:execute_claude_opus-4.8",
+                    "value": "@bcapetillo:execute_claude_opus-4.8",
                     "label": "Anthropic / Claude Opus 4.8"
                   }
                 ],
                 "gemini": [
                   {
-                    "value": "@istari_utils:execute_gemini_1.5-pro",
+                    "value": "@bcapetillo:execute_gemini_1.5-pro",
+                    "label": "Google / Gemini 1.5 Pro"
+                  }
+                ],
+                "google": [
+                  {
+                    "value": "@bcapetillo:execute_gemini_1.5-pro",
                     "label": "Google / Gemini 1.5 Pro"
                   }
                 ]
@@ -236,7 +241,7 @@ The `model` enum carries function names as its option values, so `function.name`
           "type": "text",
           "required": true,
           "default": "Diff these two files",
-          "help": "Tell the model what matters most, for example signal timing or voltage tolerances.",
+          "help": "What matters most in this comparison, for example signal timing or voltage tolerances. Passed to the module as the focus prompt.",
           "filter": {
             "multiline": true,
             "max_length": 2000
@@ -245,10 +250,10 @@ The `model` enum carries function names as its option values, so `function.name`
       ],
       "function": {
         "name": "$inputs.model",
-        "version": "1.0.5",
+        "version": "1.0.0",
         "target": "file1",
         "tool_name": "LLM",
-        "operating_system": "RHEL 9",
+        "operating_system": "Ubuntu 24.04",
         "parameters": {
           "prompt": "$inputs.prompt"
         },
@@ -257,12 +262,13 @@ The `model` enum carries function names as its option values, so `function.name`
         },
         "auth_bindings": {
           "auth_token": "$inputs.llm_credential"
-        }
+        },
+        "tool_version": "1.0"
       },
       "outputs": [
         {
           "key": "artifacts",
-          "label": "Diff report and logs",
+          "label": "Diff report (diff_output.html), prompt audit, and job logs",
           "type": "artifact"
         }
       ]

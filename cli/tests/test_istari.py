@@ -96,14 +96,14 @@ def test_bound_function_name_checks_every_enum_option() -> None:
     stage = manifest["stages"][0]
     names = candidate_function_names(stage, stage["function"])
     assert names == [
-        "@istari_utils:execute_claude_opus-4.8",
-        "@istari_utils:execute_gemini_1.5-pro",
-        "@istari_utils:execute_openai_gpt-4o",
+        "@bcapetillo:execute_claude_opus-4.8",
+        "@bcapetillo:execute_gemini_1.5-pro",
+        "@bcapetillo:execute_openai_gpt-4o",
     ]
-    integrations = FakeIntegrations([FakeFunctionVersion(n, "1.0.5") for n in names[:2]])
+    integrations = FakeIntegrations([FakeFunctionVersion(n, "1.0.0") for n in names[:2]])
     result = check_functions(integrations, manifest)
     assert result.errors == [
-        'stages[0].function.name: function "@istari_utils:execute_openai_gpt-4o" does not exist in this environment'
+        'stages[0].function.name: function "@bcapetillo:execute_openai_gpt-4o" does not exist in this environment'
     ]
     assert len(result.warnings) == 2  # schema unavailable for the two that exist
 

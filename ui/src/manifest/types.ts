@@ -21,10 +21,15 @@ export interface EnumOption {
   label: string;
 }
 
-/** Dependent options: show the group whose key equals the resolved `source` binding. */
+/**
+ * Dependent options. `source` binds to another input in the same stage; the group shown is the one whose key
+ * matches the resolved value: exactly (default) or, with `match: 'contains'`, the first key found as a
+ * case-insensitive substring of the value (useful for keying on a free-text name).
+ */
 export interface OptionsBy {
   source: string;
   groups: Record<string, EnumOption[]>;
+  match?: 'exact' | 'contains';
 }
 
 export interface InputFilter {
@@ -149,8 +154,6 @@ export interface BranchValue {
 export interface AuthSecretValue {
   secret_id: string;
   name: string;
-  /** Derived from the linked auth integration when possible. */
-  provider?: string;
 }
 
 export type InputValue =

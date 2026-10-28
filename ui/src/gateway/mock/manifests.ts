@@ -44,8 +44,7 @@ export const smartDiffManifest: WorkflowManifest = {
           type: 'auth_secret',
           required: true,
           help:
-            'One of your linked LLM accounts. The model list below follows the provider of the credential ' +
-            'you choose.',
+            'One of your linked accounts. The model list below follows the credential you choose.',
           filter: { secret_type: '@token:llm' },
         },
         {
@@ -55,7 +54,8 @@ export const smartDiffManifest: WorkflowManifest = {
           required: true,
           filter: {
             options_by: {
-              source: '$inputs.llm_credential.provider',
+              source: '$inputs.llm_credential.name',
+              match: 'contains',
               groups: {
                 openai: [
                   { value: 'gpt-4o', label: 'OpenAI / GPT-4o' },
@@ -63,7 +63,7 @@ export const smartDiffManifest: WorkflowManifest = {
                   { value: 'gpt-4.1', label: 'OpenAI / GPT-4.1' },
                   { value: 'o3', label: 'OpenAI / o3' },
                 ],
-                claude: [
+                anthropic: [
                   { value: 'claude-opus-5', label: 'Anthropic / Claude Opus 5' },
                   { value: 'claude-sonnet-5', label: 'Anthropic / Claude Sonnet 5' },
                   { value: 'claude-haiku-4-5', label: 'Anthropic / Claude Haiku 4.5' },
@@ -94,7 +94,6 @@ export const smartDiffManifest: WorkflowManifest = {
           file2_resource_id: '$inputs.file2.resource_id',
           file2_revision_id: '$inputs.file2.revision_id',
           auth_token: '$inputs.llm_credential.secret_id',
-          provider: '$inputs.llm_credential.provider',
           model: '$inputs.model',
           prompt: '$inputs.prompt',
         },

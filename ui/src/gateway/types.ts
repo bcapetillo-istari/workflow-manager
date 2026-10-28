@@ -60,8 +60,6 @@ export interface AuthSecretSummary {
   name: string;
   functionAuthType: string;
   authIntegrationId?: string;
-  /** Derived provider key (e.g. "openai", "claude", "gemini") when it can be inferred. */
-  provider?: string;
   expiration?: string;
 }
 

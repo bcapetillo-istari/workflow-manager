@@ -67,9 +67,6 @@ describe('MockGateway', () => {
     expect((await gw.readJson(created.resourceId)).data).toEqual({ a: 2 });
     expect((await gw.readJson(created.resourceId, created.revisionId)).data).toEqual({ a: 1 });
     expect(await gw.listRevisions(created.resourceId)).toHaveLength(2);
-    expect((await gw.listAuthSecrets({ secretType: '@token:llm' })).map((s) => s.provider)).toEqual([
-      'openai',
-      'claude',
-    ]);
+    expect((await gw.listAuthSecrets({ secretType: '@token:llm' })).map((s) => s.name)).toEqual(['OpenAI (team key)', 'Anthropic (personal)']);
   });
 });

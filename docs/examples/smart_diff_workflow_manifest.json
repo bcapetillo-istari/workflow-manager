@@ -2,9 +2,13 @@
   "schema_version": "1",
   "key": "smart-diff",
   "name": "Smart Diff",
-  "description": "LLM-assisted comparison of two documents. Surfaces matches, conflicts, and missing items with a traceable HTML report.",
-  "version": "1.2.0",
-  "tags": ["documents", "llm", "icd"],
+  "description": "LLM-assisted comparison of two documents. Surfaces matches, conflicts, and missing items with a traceable HTML report attached to the first document.",
+  "version": "1.3.2",
+  "tags": [
+    "documents",
+    "llm",
+    "icd"
+  ],
   "icon": "git-compare",
   "stages": [
     {
@@ -18,41 +22,76 @@
           "type": "resource",
           "required": true,
           "help": "The report will be attached to this document as an artifact.",
-          "filter": { "extensions": ["pdf", "docx", "xlsx", "txt"] }
+          "filter": {
+            "extensions": [
+              "pdf",
+              "docx",
+              "xlsx",
+              "txt"
+            ]
+          }
         },
         {
           "key": "file2",
           "label": "Second document",
           "type": "resource",
           "required": true,
-          "filter": { "extensions": ["pdf", "docx", "xlsx", "txt"] }
+          "filter": {
+            "extensions": [
+              "pdf",
+              "docx",
+              "xlsx",
+              "txt"
+            ]
+          }
         },
         {
           "key": "llm_credential",
-          "label": "LLM credential",
+          "label": "Linked account credential",
           "type": "auth_secret",
           "required": true,
-          "help": "One of your linked LLM accounts. The model list below follows the provider of the credential you choose.",
-          "filter": { "secret_type": "@token:llm" }
+          "help": "Any of your linked accounts. The model list below follows the credential you choose (matched on its name)."
         },
         {
           "key": "model",
           "label": "Model",
           "type": "enum",
           "required": true,
-          "help": "Each choice is a Smart Diff function registered for that provider and model.",
+          "help": "Each choice is a Smart Diff function of the @bcapetillo:smart_diff module registered for that provider and model.",
           "filter": {
             "options_by": {
-              "source": "$inputs.llm_credential.provider",
+              "source": "$inputs.llm_credential.name",
+              "match": "contains",
               "groups": {
                 "openai": [
-                  { "value": "@istari_utils:execute_openai_gpt-4o", "label": "OpenAI / GPT-4o" }
+                  {
+                    "value": "@bcapetillo:execute_openai_gpt-4o",
+                    "label": "OpenAI / GPT-4o"
+                  }
+                ],
+                "anthropic": [
+                  {
+                    "value": "@bcapetillo:execute_claude_opus-4.8",
+                    "label": "Anthropic / Claude Opus 4.8"
+                  }
                 ],
                 "claude": [
-                  { "value": "@istari_utils:execute_claude_opus-4.8", "label": "Anthropic / Claude Opus 4.8" }
+                  {
+                    "value": "@bcapetillo:execute_claude_opus-4.8",
+                    "label": "Anthropic / Claude Opus 4.8"
+                  }
                 ],
                 "gemini": [
-                  { "value": "@istari_utils:execute_gemini_1.5-pro", "label": "Google / Gemini 1.5 Pro" }
+                  {
+                    "value": "@bcapetillo:execute_gemini_1.5-pro",
+                    "label": "Google / Gemini 1.5 Pro"
+                  }
+                ],
+                "google": [
+                  {
+                    "value": "@bcapetillo:execute_gemini_1.5-pro",
+                    "label": "Google / Gemini 1.5 Pro"
+                  }
                 ]
               }
             }
@@ -64,16 +103,19 @@
           "type": "text",
           "required": true,
           "default": "Diff these two files",
-          "help": "Tell the model what matters most, for example signal timing or voltage tolerances.",
-          "filter": { "multiline": true, "max_length": 2000 }
+          "help": "What matters most in this comparison, for example signal timing or voltage tolerances. Passed to the module as the focus prompt.",
+          "filter": {
+            "multiline": true,
+            "max_length": 2000
+          }
         }
       ],
       "function": {
         "name": "$inputs.model",
-        "version": "1.0.5",
+        "version": "1.0.0",
         "target": "file1",
         "tool_name": "LLM",
-        "operating_system": "RHEL 9",
+        "operating_system": "Ubuntu 24.04",
         "parameters": {
           "prompt": "$inputs.prompt"
         },
@@ -82,16 +124,24 @@
         },
         "auth_bindings": {
           "auth_token": "$inputs.llm_credential"
-        }
+        },
+        "tool_version": "1.0"
       },
       "outputs": [
-        { "key": "artifacts", "label": "Diff report and logs", "type": "artifact" }
+        {
+          "key": "artifacts",
+          "label": "Diff report (diff_output.html), prompt audit, and job logs",
+          "type": "artifact"
+        }
       ]
     },
     {
       "key": "results",
       "name": "Results",
-      "view": { "type": "artifact_list", "source": "$stages.configure.outputs.artifacts" }
+      "view": {
+        "type": "artifact_list",
+        "source": "$stages.configure.outputs.artifacts"
+      }
     }
   ]
 }

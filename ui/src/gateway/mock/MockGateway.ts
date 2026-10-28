@@ -23,6 +23,7 @@ import type {
   TrackedResource,
 } from '../types';
 import { GatewayError } from '../types';
+import { matchesSecretType } from '../secretTypes';
 import type { ManifestOutput, WorkflowManifest } from '../../manifest/types';
 import type { RunDocument } from '../../run/types';
 import { brokenManifest, docReviewManifest, smartDiffManifest } from './manifests';
@@ -199,7 +200,7 @@ export class MockGateway implements IstariGateway {
 
   async listAuthSecrets(filter?: { secretType?: string }): Promise<AuthSecretSummary[]> {
     await this.tick('listAuthSecrets');
-    return this.secrets.filter((s) => !filter?.secretType || s.functionAuthType === filter.secretType);
+    return this.secrets.filter((s) => matchesSecretType(s.functionAuthType, filter?.secretType));
   }
 
   async listFunctions(filter?: { name?: string; inputExtension?: string }): Promise<FunctionSummary[]> {
@@ -369,16 +370,14 @@ export class MockGateway implements IstariGateway {
       {
         secretId: 'sec-openai',
         name: 'OpenAI (team key)',
-        functionAuthType: '@token:llm',
-        provider: 'openai',
+        functionAuthType: 'token',
       },
       {
         secretId: 'sec-claude',
         name: 'Anthropic (personal)',
-        functionAuthType: '@token:llm',
-        provider: 'claude',
+        functionAuthType: 'token',
       },
-      { secretId: 'sec-github', name: 'GitHub', functionAuthType: '@token:git', provider: 'github' },
+      { secretId: 'sec-github', name: 'GitHub', functionAuthType: 'oauth2' },
     );
     this.functions.push(
       {

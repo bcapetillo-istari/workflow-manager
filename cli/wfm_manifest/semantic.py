@@ -21,7 +21,7 @@ VALUE_FIELDS: dict[str, tuple[str, ...]] = {
     "resource": ("resource_id", "revision_id", "name"),
     "system": ("system_id", "name"),
     "branch": ("branch_id", "tag"),
-    "auth_secret": ("secret_id", "name", "provider"),
+    "auth_secret": ("secret_id", "name"),
 }
 # Types whose value is a scalar or string list and therefore has no fields.
 SCALAR_TYPES = frozenset({"text", "number", "boolean", "enum", "multi_enum"})

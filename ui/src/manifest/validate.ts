@@ -25,7 +25,7 @@ const VALUE_FIELDS: Partial<Record<InputType, readonly string[]>> = {
   resource: ['resource_id', 'revision_id', 'name'],
   system: ['system_id', 'name'],
   branch: ['branch_id', 'tag'],
-  auth_secret: ['secret_id', 'name', 'provider'],
+  auth_secret: ['secret_id', 'name'],
 };
 /** Types whose value is a scalar or string list and therefore has no fields. */
 const SCALAR_TYPES: ReadonlySet<InputType> = new Set(['text', 'number', 'boolean', 'enum', 'multi_enum']);

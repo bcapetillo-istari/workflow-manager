@@ -87,17 +87,6 @@ export function mapRevision(r: ResourceRevisionDto): RevisionSummary {
   };
 }
 
-/**
- * Best-effort provider key from the credential name (the API has no provider field):
- * 'openai' -> openai; 'anthropic' | 'claude' -> claude; 'gemini' | 'google' -> gemini.
- */
-export function deriveProvider(name: string): string | undefined {
-  const n = name.toLowerCase();
-  if (n.includes('openai')) return 'openai';
-  if (n.includes('anthropic') || n.includes('claude')) return 'claude';
-  if (n.includes('gemini') || n.includes('google')) return 'gemini';
-  return undefined;
-}
 
 export function mapCredential(c: StoredCredentialDto): AuthSecretSummary {
   return {
@@ -105,7 +94,6 @@ export function mapCredential(c: StoredCredentialDto): AuthSecretSummary {
     name: c.name,
     functionAuthType: c.auth_type,
     authIntegrationId: orUndefined(c.auth_integration_id),
-    provider: deriveProvider(c.name),
   };
 }
 
